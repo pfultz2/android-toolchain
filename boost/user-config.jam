@@ -1,0 +1,19 @@
+using gcc : android
+:
+arm-linux-androideabi-g++
+:
+<archiver>arm-linux-androideabi-ar
+<ranlib>arm-linux-androideabi-ranlib
+<compileflags>-fpic
+<compileflags>-Os
+<compileflags>-DANDROID
+<compileflags>-D__ANDROID__
+<compileflags>-DNDEBUG
+<architecture>arm
+<compileflags>-fvisibility=hidden
+<compileflags>-fvisibility-inlines-hidden
+<compileflags>-fdata-sections
+<cxxflags>-D__arm__
+<cxxflags>-D_REENTRANT
+<cxxflags>-D_GLIBCXX__PTHREADS
+;

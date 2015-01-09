@@ -1,5 +1,5 @@
 
-JOBS := 12
+JOBS := 8
 
 PWD := $(shell pwd)
 PREFIX := $(PWD)/usr
@@ -45,18 +45,18 @@ $(PKG_DIR)/ndk: $(PKG_DIR)/download-ndk
 BOOST_VERSION := 55
 BOOST_NAME := boost_1_$(BOOST_VERSION)_0
 $(PKG_DIR)/download-boost:
-	cd $(PKG_DIR) && wget http://downloads.sourceforge.net/project/boost/boost/1.$(BOOST_VERSION).0/$(BOOST_NAME).tar.bz2
-	cd $(PKG_DIR) && tar --bzip2 -xf $(BOOST_NAME).tar.bz2
-	cd $(PKG_DIR)/$(BOOST_NAME) && patch -p1 < $(PWD)/$(BOOST_NAME).patch
-	touch $(PKG_DIR)/download-boost
+	cd '$(PKG_DIR)' && wget http://downloads.sourceforge.net/project/boost/boost/1.$(BOOST_VERSION).0/$(BOOST_NAME).tar.bz2
+	cd '$(PKG_DIR)' && tar --bzip2 -xf $(BOOST_NAME).tar.bz2
+	cd '$(PKG_DIR)/$(BOOST_NAME)' && patch -p1 < $(PWD)/boost/$(BOOST_NAME).patch
+	find '$(PKG_DIR)/$(BOOST_NAME)' -type f | xargs -n1 -P $(JOBS) sed -i "s/-lrt//g"
+	cp '$(PWD)/boost/user.hpp' '$(PKG_DIR)/$(BOOST_NAME)/boost/config/user.hpp'
+	touch '$(PKG_DIR)/download-boost'
 
 $(PKG_DIR)/boost: $(PKG_DIR)/download-boost $(PKG_DIR)/ndk
-	find "$(PKG_DIR)/$(BOOST_NAME)" -type f | xargs -n1 sed -i "s/-lrt//g"
-	echo 'using gcc : android : arm-linux-androideabi-g++ : <archiver>arm-linux-androideabi-ar <ranlib>arm-linux-androideabi-ranlib ;' > $(PKG_DIR)/$(BOOST_NAME)/user-config.jam
-	cd $(PKG_DIR)/$(BOOST_NAME) && ./bootstrap.sh
-	cd $(PKG_DIR)/$(BOOST_NAME) && ./b2 -a -q -j $(JOBS) \
+	cd '$(PKG_DIR)/$(BOOST_NAME)' && ./bootstrap.sh
+	cd '$(PKG_DIR)/$(BOOST_NAME)' && ./b2 -a -q -j $(JOBS) \
 		--ignore-site-config \
-		--user-config=user-config.jam \
+		--user-config=$(PWD)/boost/user-config.jam \
 		address-model=32 \
 		architecture=arm \
 		link=static,shared \
@@ -64,27 +64,22 @@ $(PKG_DIR)/boost: $(PKG_DIR)/download-boost $(PKG_DIR)/ndk
 		toolset=gcc-android \
 		target-os=linux \
 		--disable-icu \
+		--without-atomic \
 		--without-context \
 		--without-coroutine \
-		--without-iostreams \
 		--without-log \
 		--without-mpi \
 		--without-python \
 		--without-serialization \
-		-sNO_COMPRESSION \
-		-sBOOST_THREAD_DONT_USE_CHRONO \
-		-sBOOST_AC_USE_PTHREADS \
-		-sBOOST_ASIO_DISABLE_STD_ATOMIC \
-		-s__ANDROID__ \
-		-sANDROID \
-		-s__arm__ \
+		--without-system \
+		-sNO_BZIP2=1
 		--prefix='$(PREFIX)' \
 		--exec-prefix='$(PREFIX)/bin' \
 		--libdir='$(PREFIX)/lib' \
 		--includedir='$(PREFIX)/include' \
 		cxxflags='-std=c++1y' \
 		install
-	touch $(PKG_DIR)/boost
+	touch '$(PKG_DIR)/boost'
 
 .PHONY: boost
 boost: $(PKG_DIR)/boost
